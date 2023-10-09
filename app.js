@@ -1,60 +1,48 @@
-const http= require('http');
+// 
 
+const http = require('http');
+const fs = require('fs');
 
-// const serve=function((req,res){
+const server = http.createServer((req,res)=>{
+   const url = req.url;
+   const method = req.method;
 
-// })
+   if (url === '/') {
+    fs.readFile('message.txt',{encoding : 'utf-8'}, (err,data)=>{
+        if (err) {
+           console.log(err)
+        }
 
-
-
-const server=http.createServer((req,res)=>{
-    // console.log(req.url, req.method, req.headers)
-    // process.exit()
-
-    const url=req.url;
-    if (url==='/'){
+        console.log(`data fetched, ${data}`);
         res.write('<html>');
-        res.write('<head><title>My First Message</title></head>')
-        res.write('<body><form action="/message" method="POST"><input type="text" name="message"><button type="submit">send</button></form></body>')
-        res.write('</html>')
-        return res.end();
+        res.write('<head><title>Read and write from file</title></head>');
+        res.write('<body>');
+        res.write(`<h3>previous data : ${data} </h3>`)
+        res.write(
+           `<form action='/message' method='POST'>
+           <input type='text' name='message'><button type ='submit'>send</button></form>`
+         );
+         res.write('</body>');
+         res.write('</html>');
+         return res.end();
+     })
+  }
+  if(url==="/message" && method==="POST") {
+    const body =[]
+    req.on('data',(chunk)=>{
+       console.log(chunk)
+       body.push(chunk)
+    })
+   req.on('end',()=>{
+       const parsedBody = Buffer.concat(body).toString();
+       const message = parsedBody.split('=')[1];//1 is the 2nd element in the resulting array
+       fs.writeFileSync('message.txt', message);//tz is depend on the incoming data so
+    });
 
-    }
-
-    if (url==='/home'){
-        res.write('<html>');
-    res.write('<head><title>Home Page</title></head>')
-    res.write('<body><h1> Welcome home</h1></body>')
-    res.write('</html>')
-    return res.end();
-
-    }
-
-    if (url==='/about'){
-        res.write('<html>');
-    res.write('<head><title>About Page</title></head>')
-    res.write('<body><h1> Welcome About</h1></body>')
-    res.write('</html>')
-    return res.end();
-
-    }
-
-    if (url==='/node'){
-        res.write('<html>');
-    res.write('<head><title>Node Page</title></head>')
-    res.write('<body><h1>Welcome to my Node Js project</h1></body>')
-    res.write('</html>')
-    return res.end();
-
-    }
-
-    res.setHeader('Content-Type', 'text/html');
-    res.write('<html>');
-    res.write('<head><title>My First Page</title></head>')
-    res.write('<body><h1>Hello from my node.js</h1></body>')
-    res.write('</html>')
-    res.end();
-
+    res.statusCode=302; //302 is stutus code which stands for redirection
+    res.setHeader('Location', '/');
+    return res.end()
+ }
 })
 
 server.listen(4000);
